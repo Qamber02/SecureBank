@@ -1,4 +1,4 @@
-# 💳 SecureBank
+# SecureBank
 
 SecureBank is a lightweight, modular web banking application built with [Streamlit](https://streamlit.io/) and backed by a MySQL database. It allows users to register, log in securely, and manage checking or savings accounts with real-time updates.
 
