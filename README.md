@@ -6,7 +6,7 @@ SecureBank is a lightweight, modular web banking application built with [Streaml
 
 ## 🚀 Features
 
-- 🔐 Secure user authentication with bcrypt password hashing
+-  Secure user authentication with bcrypt password hashing
 - 🧾 Checking & savings account logic with overdraft/sufficient funds validation
 - 📊 Streamlit-based UI for login, registration, and dashboard
 - 🗃️ Modular database layer with PyMySQL
