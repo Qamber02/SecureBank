@@ -1,53 +1,82 @@
 import bcrypt
+from typing import List
+from uuid import uuid4
+
 
 class Customer:
-    def __init__(self, id, name, email, password_hash, profile_img):
-        self.id = id
+    def __init__(self, name: str, email: str, password: str, profile_img: str = None):
+        self.id = str(uuid4())
         self.name = name
-        self.email = email
-        self.password_hash = password_hash
+        self.email = self._validate_email(email)
+        self.password_hash = self._hash_password(password)
         self.profile_img = profile_img
-        self.accounts = []
+        self.accounts: List[BankAccount] = []
+
+    def _hash_password(self, password: str) -> bytes:
+        if not password:
+            raise ValueError("Password cannot be empty.")
+        return bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+
+    def verify_password(self, password: str) -> bool:
+        return bcrypt.checkpw(password.encode(), self.password_hash)
+
+    def _validate_email(self, email: str) -> str:
+        if "@" not in email:
+            raise ValueError("Invalid email address.")
+        return email
+
+    def add_account(self, account: "BankAccount"):
+        self.accounts.append(account)
+
 
 class BankAccount:
-    def __init__(self, id, account_type, balance=0.0):
-        self._balance = balance
-        self.id = id
+    def __init__(self, account_type: str, balance: float = 0.0):
+        self.id = str(uuid4())
         self.type = account_type
+        self._balance = self._validate_amount(balance)
 
-    def deposit(self, amount):
-        if amount <= 0:
-            raise ValueError("Deposit must be positive.")
+    def _validate_amount(self, amount: float) -> float:
+        if amount < 0:
+            raise ValueError("Amount cannot be negative.")
+        return amount
+
+    def deposit(self, amount: float) -> float:
+        amount = self._validate_amount(amount)
         self._balance += amount
         return self._balance
 
-    def get_balance(self):
+    def get_balance(self) -> float:
         return self._balance
+
+    def _can_withdraw(self, amount: float) -> bool:
+        raise NotImplementedError("Withdrawal logic must be implemented.")
+
 
 class SavingsAccount(BankAccount):
-    def __init__(self, id, balance=0.0):
-        super().__init__(id, "Savings", balance)
+    def __init__(self, balance: float = 0.0):
+        super().__init__("Savings", balance)
 
-    def withdraw(self, amount):
-        if amount <= 0:
-            raise ValueError("Withdrawal must be positive.")
-        if self._balance >= amount:
-            self._balance -= amount
-        else:
+    def withdraw(self, amount: float) -> float:
+        amount = self._validate_amount(amount)
+
+        if self._balance < amount:
             raise ValueError("Insufficient funds.")
+
+        self._balance -= amount
         return self._balance
+
 
 class CheckingAccount(BankAccount):
     OVERDRAFT_LIMIT = 500.0
 
-    def __init__(self, id, balance=0.0):
-        super().__init__(id, "Checking", balance)
+    def __init__(self, balance: float = 0.0):
+        super().__init__("Checking", balance)
 
-    def withdraw(self, amount):
-        if amount <= 0:
-            raise ValueError("Withdrawal must be positive.")
-        if self._balance + self.OVERDRAFT_LIMIT >= amount:
-            self._balance -= amount
-        else:
-            raise ValueError("Withdrawal exceeds overdraft limit.")
+    def withdraw(self, amount: float) -> float:
+        amount = self._validate_amount(amount)
+
+        if self._balance + self.OVERDRAFT_LIMIT < amount:
+            raise ValueError("Exceeds overdraft limit.")
+
+        self._balance -= amount
         return self._balance
